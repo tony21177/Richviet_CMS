@@ -82,7 +82,7 @@ export const constantRoutes = [
         meta: { title: 'MemberList', icon: 'people', affix: true }
       }
     ]
-  },
+  }
   // {
   //   path: '/dashboard',
   //   component: Layout,

@@ -15,11 +15,9 @@ export function fetchMemberById(id) {
   })
 }
 
-
-
-export function updateMemberKycStatus(id,data) {
+export function updateMemberKycStatus(id, data) {
   console.log('debut updateMemberKycStatus')
-  console.log(id,data)
+  console.log(id, data)
   return request({
     url: `/admin/v1/kyc/${id}`,
     method: 'put',
