@@ -27,11 +27,20 @@ module.exports = {
   publicPath: '/',
   outputDir: 'dist',
   assetsDir: 'static',
-  lintOnSave: process.env.NODE_ENV === 'development',
+  lintOnSave: false,
+ 
+  
+  // lintOnSave: process.env.NODE_ENV === 'development',
   productionSourceMap: false,
   devServer: {
     port: port,
     open: true,
+    proxy: {
+      '^/dev-api/admin': {
+        target: 'http://localhost:10000/',
+        pathRewrite: {'^/dev-api' : '/'}
+      }
+    },
     overlay: {
       warnings: false,
       errors: true
