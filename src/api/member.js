@@ -21,6 +21,9 @@ export function updateMemberKycStatus(id, data) {
   return request({
     url: `/admin/v1/kyc/${id}`,
     method: 'put',
-    data
+    data,
+    headers: {
+      'Content-type': 'application/json; charset=UTF-8;'
+    }
   })
 }
