@@ -2,8 +2,8 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input
-        v-model="listQuery.title"
-        placeholder="Title"
+        v-model="listQuery.id"
+        placeholder="id"
         style="width: 200px"
         class="filter-item"
         @keyup.enter.native="handleFilter"
@@ -123,14 +123,15 @@
     />
 
     <!-- member detail dialog -->
-    <el-dialog title="會員明細" :visible.sync="dialogFormVisible">
+    <el-dialog title="會員明細" :visible.sync="dialogFormVisible" width="60%">
       <el-form
         ref="dataForm"
         :model="temp"
         label-position="left"
         label-width="150px"
-        style="width: 600px; margin-left: 50px"
+        style="width: 100%; margin-left: 50px"
       >
+      <div class="left" style="float:left">
         <el-form-item label="姓名">
           <span>{{ temp.name }}</span>
         </el-form-item>
@@ -150,7 +151,7 @@
         <el-form-item label="會員等級">
           <span>{{ temp.level | levelFilter }}</span>
         </el-form-item>
-        <div style="width: 100%; height: 40%" />
+        <div style="width: 100%; height: 40%; margin-top:70px" />
         <el-form-item label="基本資料">
           <el-button type="primary" size="mini"> 編輯 </el-button>
         </el-form-item>
@@ -164,7 +165,7 @@
           <span>{{ new Date(temp.birthday).toLocaleDateString() }}</span>
         </el-form-item>
         <el-form-item label="護照號碼:">
-          <span>temp.</span>
+          <span>{{ temp.passportId }}</span>
         </el-form-item>
         <el-form-item label="核發日期:">
           <span>{{ new Date(temp.arcIssueDate).toLocaleDateString() }}</span>
@@ -184,30 +185,21 @@
         <el-form-item label="最近上線地點:">
           <span>{{ new Date(temp.birthday).toLocaleDateString() }}</span>
         </el-form-item>
+      </div>
+      <div class="right" style="float:left">
+        <el-form-item label="證件正面照:">
+          <img :src="imageUrl+'/2'" width="200" height="200">
+        </el-form-item>
+        <el-form-item label="證件反面照:">
+          <img :src="imageUrl+'/3'" width="200" height="200">
+        </el-form-item>
+      </div>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <div slot="footer" class="dialog-footer" style="clear:both;">
         <el-button @click="dialogFormVisible = false"> Cancel </el-button>
       </div>
     </el-dialog>
 
-    <el-dialog :visible.sync="dialogPvVisible" title="Reading statistics">
-      <el-table
-        :data="pvData"
-        border
-        fit
-        highlight-current-row
-        style="width: 100%"
-      >
-        <el-table-column prop="key" label="Channel" />
-        <el-table-column prop="pv" label="Pv" />
-      </el-table>
-      <span slot="footer" class="dialog-footer">
-        <el-button
-          type="primary"
-          @click="dialogPvVisible = false"
-        >Confirm</el-button>
-      </span>
-    </el-dialog>
 
     <!-- change member status dialog -->
     <el-dialog title="變更會員狀態" :visible.sync="dialogKycStatusVisible">
@@ -267,23 +259,7 @@
       </div>
     </el-dialog>
 
-    <!-- <el-dialog :visible.sync="dialogPvVisible" title="Reading statistics">
-      <el-table
-        :data="pvData"
-        border
-        fit
-        highlight-current-row
-        style="width: 100%"
-      >
-        <el-table-column prop="key" label="Channel" />
-        <el-table-column prop="pv" label="Pv" />
-      </el-table>
-      <span slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="dialogPvVisible = false;dialogFormVisible = true;dialogKycStatusVisible=false"
-          >Confirm</el-button
-        >
-      </span>
-    </el-dialog> -->
+
   </div>
 </template>
 
@@ -355,7 +331,7 @@ export default {
         page: 1,
         limit: 20,
         importance: undefined,
-        title: undefined,
+        id: undefined,
         type: undefined,
         sort: '+id'
       },
@@ -461,43 +437,6 @@ export default {
         this.listQuery.sort = '-id'
       }
       this.handleFilter()
-    },
-    resetTemp() {
-      this.temp = {
-        id: undefined,
-        importance: 1,
-        remark: '',
-        timestamp: new Date(),
-        title: '',
-        status: 'published',
-        type: ''
-      }
-    },
-    handleCreate() {
-      this.resetTemp()
-      this.dialogStatus = 'create'
-      this.dialogFormVisible = true
-      this.$nextTick(() => {
-        this.$refs['dataForm'].clearValidate()
-      })
-    },
-    createData() {
-      this.$refs['dataForm'].validate((valid) => {
-        if (valid) {
-          this.temp.id = parseInt(Math.random() * 100) + 1024 // mock a id
-          this.temp.author = 'vue-element-admin'
-          createArticle(this.temp).then(() => {
-            this.list.unshift(this.temp)
-            this.dialogFormVisible = false
-            this.$notify({
-              title: 'Success',
-              message: 'Created Successfully',
-              type: 'success',
-              duration: 2000
-            })
-          })
-        }
-      })
     },
     handleUpdate(row, index) {
       this.goingUpdateUserId = row.id
