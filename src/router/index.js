@@ -78,8 +78,21 @@ export const constantRoutes = [
       {
         path: 'memberList',
         component: () => import('@/views/member/index'),
-        name: 'MemberList',
+        name: '會員',
         meta: { title: 'MemberList', icon: 'people', affix: true }
+      }
+    ]
+  },
+  {
+    path: '/',
+    component: Layout,
+    redirect: '/transactions',
+    children: [
+      {
+        path: 'transactions',
+        component: () => import('@/views/transaction/index'),
+        name: '交易',
+        meta: { title: 'Transactions', icon: 'money', affix: true }
       }
     ]
   }

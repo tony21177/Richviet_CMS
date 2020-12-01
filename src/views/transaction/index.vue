@@ -64,30 +64,34 @@
           <span>{{ row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="註冊時間" width="150px" align="center">
+      <el-table-column label="會員id" width="150px" align="center">
         <template slot-scope="{ row }">
-          <span>{{ new Date(row.registerTime).toLocaleDateString() }}</span>
+          <span>{{ row.userId }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="ArcNo" min-width="150px" align="center">
-        <template slot-scope="{ row }">
-          <span>{{ row.arcNo }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="姓名" width="110px" align="center">
+      <el-table-column label="會員姓名" width="150px" align="center">
         <template slot-scope="{ row }">
           <span>{{ row.name }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="狀態" width="110px" align="center">
+      <el-table-column label="會員ARC" width="150px" align="center">
         <template slot-scope="{ row }">
-          <!-- <span>{{ row.kycStatus }}</span> -->
-          <el-tag>{{ row.kycStatus | kycStatusFilter }}</el-tag>
+          <span>{{ row.arcNo }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="等級" width="110px" align="center">
+      <el-table-column label="交易金額" width="150px" align="center">
         <template slot-scope="{ row }">
-          <span>{{ row.level | levelFilter }}</span>
+          <span>{{ row.fromAmount }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="交易狀態" width="110px" align="center">
+        <template slot-scope="{ row }">
+          <el-tag>{{ row.transactionStatus | transactionStatusFilter }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="申請時間" width="110px" align="center">
+        <template slot-scope="{ row }">
+          <span>{{ new Date(row.formalApplyTime).toLocaleDateString() }}<span>
         </template>
       </el-table-column>
       <el-table-column
@@ -257,44 +261,28 @@
 </template>
 
 <script>
-import { fetchMemberList, fetchMemberById, updateMemberKycStatus } from '@/api/member'
+import { fetchTransactionList } from '@/api/transaction'
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 
-const levelMapping = {
-  0: '一般會員',
-  1: 'VIP',
-  9: '高風險會員'
-}
 
-const genderMapping = {
-  0: '其他',
-  1: '男',
-  2: '女'
-}
+const transactionStatusOptions = [{value:-10,label:'其他錯誤',disabled: true},{value:-9,label:'審核失敗'}, {value:-8,label:'AML未通過'},{value:-7,label:'交易逾期'}, {value:0,label:'草稿',disabled: true},
+      {value:1,label:'待ARC審核',disabled: true}, {value:2,label:'ARC審核成功'}, {value:3,label:'AML審核成功'}, {value:4,label:'營運人員確認完成,待繳費'},
+       {value:5,label:'已繳款完成,待匯款',disabled: true}, {value:9,label:'交易完成'}]
 
-const kycStatusOptions = [{value:-10,label:'停用'},{value:-9,label:'KYC未通過'}, {value:-8,label:'AML未通過'}, {value:0,label:'草稿會員',disabled: true},
-      {value:1,label:'待審核',disabled: true}, {value:2,label:'ARC驗證成功'}, {value:3,label:'AML通過'}, {value:9,label:'正式會員'}]
-
-const kycStatusKeyValue = kycStatusOptions.reduce((acc, cur) => {
+const transactionStatusKeyValue = transactionStatusOptions.reduce((acc, cur) => {
   acc[cur.value] = cur.label
   return acc
 }, {})
 
 export default {
-  name: 'MemberListTable',
+  name: 'TransactionsTable',
   components: { Pagination },
   directives: { waves },
   filters: {
-    kycStatusFilter(type) {
-      return kycStatusKeyValue[type]
-    },
-    levelFilter(type) {
-      return levelMapping[type]
-    },
-    genderFilter(type) {
-      return genderMapping[type]
+    transactionStatusFilter(type) {
+      return transactionStatusKeyValue[type]
     }
   },
   data() {
@@ -309,34 +297,29 @@ export default {
         id: undefined,
         sort: '+id'
       },
-      changTokycStatus: kycStatusOptions,
+      changToTransactionStatus: transactionStatusOptions,
       sortOptions: [
         { label: 'ID Ascending', key: '+id' },
         { label: 'ID Descending', key: '-id' }
       ],
       temp: {
         id: undefined,
+        userId: undefined,
         name: '',
         arcNo: '',
-        kycStatus: undefined,
-        level: undefined,
-        gender: undefined,
-        country: '',
-        birthday: '',
-        passportId: '',
-        arcIssueDate: '',
-        arcExpireDate: '',
-        backSequence: '',
-        phone: '',
-        loginTime: '',
-        address: '',
-        idImageA: '',
-        idImageB: ''
+        fromAmount: '',
+        fee: '',
+        discountAmount: '',
+        exchangeRate: '',
+        toAmount: '',
+        bank:'',
+        payeeAddress: '',
+        payeeRelationTypeDescription: '',
+        transactionStatus: '',
+        formalApplyTime: ''
       },
-      goingUpdateUserId: undefined,
       dialogFormVisible: false,
       dialogKycStatusVisible: false,
-      dialogPvVisible: false,
       downloadLoading: false
     }
   },
@@ -351,7 +334,7 @@ export default {
   methods: {
     getList() {
       this.listLoading = true
-      fetchMemberList().then((response) => {
+      fetchTransactionList().then((response) => {
         this.list = response.data
         this.total = response.data.length
         this.listLoading = false

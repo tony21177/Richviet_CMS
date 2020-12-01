@@ -1,5 +1,5 @@
 module.exports = {
-  title: 'Vue Element Admin',
+  title: 'Richviet CMS',
 
   /**
    * @type {boolean} true | false
