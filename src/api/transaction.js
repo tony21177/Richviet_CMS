@@ -7,3 +7,10 @@ export function fetchTransactionList() {
   })
 }
 
+
+export function fetchTransactionById(id) {
+  return request({
+    url: `/vue-element-admin/transactions/${id}`,
+    method: 'get'
+  })
+}

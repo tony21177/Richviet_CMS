@@ -91,8 +91,7 @@
       </el-table-column>
       <el-table-column label="申請時間" width="110px" align="center">
         <template slot-scope="{ row }">
-          <span>{{ new Date(row.formalApplyTime).toLocaleDateString() }}<span>
-        </template>
+          <span>{{ new Date(row.formalApplyTime).toLocaleDateString() }}<span /></span></template>
       </el-table-column>
       <el-table-column
         label="Actions"
@@ -121,7 +120,7 @@
     />
 
     <!-- member detail dialog -->
-    <el-dialog title="會員明細" :visible.sync="dialogFormVisible" width="60%">
+    <el-dialog title="交易明細" :visible.sync="dialogFormVisible" width="60%">
       <el-form
         ref="dataForm"
         :model="temp"
@@ -136,61 +135,63 @@
           <el-form-item label="ARC">
             <span>{{ temp.arcNo }}</span>
           </el-form-item>
-          <el-form-item label="會員狀態">
-            <span>{{ temp.kycStatus | kycStatusFilter }}</span>
+          <el-form-item label="交易狀態">
+            <span>{{ temp.transactionStatus | transactionStatusFilter }}</span>
             <el-button
               type="primary"
               size="mini"
-              @click="dialogFormVisible=false;dialogKycStatusVisible=true"
+              @click="dialogFormVisible=false;dialogTransactionStatusVisible=true"
             >
               變更
             </el-button>
           </el-form-item>
-          <el-form-item label="會員等級">
-            <span>{{ temp.level | levelFilter }}</span>
+          <div style="width: 100%; height: 40%; margin-top:70px" />
+          <el-form-item label="交易金額">
+            <span>{{ temp.fromAmount }}</span>
+          </el-form-item>
+          <el-form-item label="手續費">
+            <span>{{ temp.fee }}</span>
+          </el-form-item>
+          <el-form-item label="優惠">
+            <span>{{ temp.discountAmount }}</span>
+          </el-form-item>
+          <el-form-item label="匯率">
+            <span>{{ temp.exchangeRate }}</span>
+          </el-form-item>
+          <el-form-item label="實收金額">
+            <span>{{ temp.fromAmount - ((temp.fee-temp.discountAmount) < 0 ? 0: temp.fee-temp.discountAmount)}}</span>
           </el-form-item>
           <div style="width: 100%; height: 40%; margin-top:70px" />
-          <el-form-item label="基本資料">
-            <el-button type="primary" size="mini"> 編輯 </el-button>
+          <el-form-item label="收款銀行">
+            <span>{{ temp.bank }}</span>
           </el-form-item>
-          <el-form-item label="性別:">
-            <span>{{ temp.gender | genderFilter }}</span>
+          <el-form-item label="帳號">
+            <span>{{ temp.payeeAddress }}</span>
           </el-form-item>
-          <el-form-item label="國籍:">
-            <span>{{ temp.country }}</span>
+          <el-form-item label="關係">
+            <span>{{ temp.payeeRelationTypeDescription }}</span>
           </el-form-item>
-          <el-form-item label="生日:">
-            <span>{{ new Date(temp.birthday).toLocaleDateString() }}</span>
+          <el-form-item label="及時拍照:">
+            <img :src="imageUrl+'/0'" width="200" height="200">
           </el-form-item>
-          <el-form-item label="護照號碼:">
-            <span>{{ temp.passportId }}</span>
-          </el-form-item>
-          <el-form-item label="核發日期:">
-            <span>{{ new Date(temp.arcIssueDate).toLocaleDateString() }}</span>
-          </el-form-item>
-          <el-form-item label="居留期限:">
-            <span>{{ new Date(temp.arcExpireDate).toLocaleDateString() }}</span>
-          </el-form-item>
-          <el-form-item label="背面序號:">
-            <span>{{ temp.backSequence }}</span>
-          </el-form-item>
-          <el-form-item label="電話:">
-            <span>{{ temp.phone }}</span>
-          </el-form-item>
-          <el-form-item label="最後上線時間:">
-            <span>{{ temp.loginTime }}</span>
-          </el-form-item>
-          <el-form-item label="最近上線地點:">
-            <span></span>
+          <el-form-item label="電子簽名:">
+            <img :src="imageUrl+'/1'" width="200" height="200">
           </el-form-item>
         </div>
         <div class="right" style="float:left">
-          <el-form-item label="證件正面照:">
-            <img :src="imageUrl+'/2'" width="200" height="200">
-          </el-form-item>
-          <el-form-item label="證件反面照:">
-            <img :src="imageUrl+'/3'" width="200" height="200">
-          </el-form-item>
+          <el-timeline>
+            <el-timeline-item
+              v-for="(transactionStatus, index) in transactionStatusTimeLine"
+              :key="index"
+              :color="transactionStatus.color"
+              >
+              {{transactionStatus.label}}:
+              <el-card>
+                <h4>{{ transactionStatus.note }}</h4>
+                <p>{{ transactionStatus.timestamp }}</p>
+              </el-card>
+            </el-timeline-item>
+          </el-timeline>
         </div>
       </el-form>
       <div slot="footer" class="dialog-footer" style="clear:both;">
@@ -199,7 +200,7 @@
     </el-dialog>
 
     <!-- change member status dialog -->
-    <el-dialog title="變更會員狀態" :visible.sync="dialogKycStatusVisible">
+    <!-- <el-dialog title="變更會員狀態" :visible.sync="dialogTransactionStatusVisible">
       <el-form
         ref="dataForm"
         :model="temp"
@@ -250,27 +251,27 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogPvVisible = false;dialogFormVisible = true;dialogKycStatusVisible=false;"> Cancel </el-button>
+        <el-button @click="dialogPvVisible = false;dialogFormVisible = true;dialogTransactionStatusVisible=false;"> Cancel </el-button>
         <el-button type="primary" @click="changeKycStatus()">
           Confirm
         </el-button>
       </div>
-    </el-dialog>
+    </el-dialog> -->
 
   </div>
 </template>
 
 <script>
-import { fetchTransactionList } from '@/api/transaction'
+import { fetchTransactionList,fetchTransactionById } from '@/api/transaction'
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 
+const transactionStatusOptions = [{ value: -10, label: '其他錯誤', disabled: true }, { value: -9, label: '審核失敗' }, { value: -8, label: 'AML未通過' }, { value: -7, label: '交易逾期' }, { value: 0, label: '草稿', disabled: true },
+  { value: 1, label: '待ARC審核', disabled: true }, { value: 2, label: 'ARC審核成功' }, { value: 3, label: 'AML審核成功' }, { value: 4, label: '營運人員確認完成,待繳費' },
+  { value: 5, label: '已繳款完成,待匯款', disabled: true }, { value: 9, label: '交易完成' }]
 
-const transactionStatusOptions = [{value:-10,label:'其他錯誤',disabled: true},{value:-9,label:'審核失敗'}, {value:-8,label:'AML未通過'},{value:-7,label:'交易逾期'}, {value:0,label:'草稿',disabled: true},
-      {value:1,label:'待ARC審核',disabled: true}, {value:2,label:'ARC審核成功'}, {value:3,label:'AML審核成功'}, {value:4,label:'營運人員確認完成,待繳費'},
-       {value:5,label:'已繳款完成,待匯款',disabled: true}, {value:9,label:'交易完成'}]
-
+  
 const transactionStatusKeyValue = transactionStatusOptions.reduce((acc, cur) => {
   acc[cur.value] = cur.label
   return acc
@@ -298,6 +299,7 @@ export default {
         sort: '+id'
       },
       changToTransactionStatus: transactionStatusOptions,
+      transactionStatusTimeLine :　transactionStatusOptions.filter(status=>status.value>=0),
       sortOptions: [
         { label: 'ID Ascending', key: '+id' },
         { label: 'ID Descending', key: '-id' }
@@ -312,14 +314,14 @@ export default {
         discountAmount: '',
         exchangeRate: '',
         toAmount: '',
-        bank:'',
+        bank: '',
         payeeAddress: '',
         payeeRelationTypeDescription: '',
         transactionStatus: '',
         formalApplyTime: ''
       },
       dialogFormVisible: false,
-      dialogKycStatusVisible: false,
+      dialogTransactionStatusVisible: false,
       downloadLoading: false
     }
   },
@@ -340,11 +342,18 @@ export default {
         this.listLoading = false
       })
     },
-    getMemberDetail(id) {
+    getTransactionDetail(id) {
       this.listLoading = true
-      fetchMemberById(id).then((response) => {
+      fetchTransactionById(id).then((response) => {
         this.temp = Object.assign({}, response.data)
+        this.temp.adminVerifyNote
         this.listLoading = false
+        this.transactionStatusTimeLine.find(status=>status.value==4).note = response.data.adminVerifyNote
+        this.transactionStatusTimeLine.forEach(status => {
+            if(status.value<=this.temp.transactionStatus){
+              status.color = '#0bbd87'
+            }
+        });
       })
     },
     handleFilter() {
@@ -374,8 +383,8 @@ export default {
     },
     handleUpdate(row, index) {
       this.goingUpdateUserId = row.id
-      this.getMemberDetail(row.id)
-      this.dialogKycStatusVisible = false
+      this.getTransactionDetail(row.id)
+      this.dialogTransactionStatusVisible = false
       this.dialogFormVisible = true
     },
     selectKycStatus(status) {
@@ -401,7 +410,7 @@ export default {
         }
         this.dialogPvVisible = false
         this.dialogFormVisible = false
-        this.dialogKycStatusVisible = false
+        this.dialogTransactionStatusVisible = false
         this.getList()
       })
     },

@@ -25,7 +25,36 @@ for (let i = 0; i < count; i++) {
   }))
 }
 
+const transaction = {
+  id: 1,
+  userId : '10002',
+  name: 'Nguyen Hoang Viet',
+  arcNo: 'NC12345670',
+  fromAmount: 10000,
+  fee: 150,
+  discountAmount: 0,
+  exchangeRate: 800,
+  bank: 'Ngân hàng Cathay United',
+  payeeAddress: '00130042450',
+  payeeRelationTypeDescription: '父母',
+  transactionStatus: 4,
+  formalApplyTime: new Date(),
+  adminVerifyNote: "審核通過"
+}
+
 module.exports = [
+  {
+    url: '/vue-element-admin/transactions/[0-9]+',
+    type: 'get',
+    response: _ => {
+      return {
+        status: 200,
+        success: true,
+        msg: null,
+        data:  transaction
+      }
+    }
+  },
   {
     url: '/vue-element-admin/transactions',
     type: 'get',

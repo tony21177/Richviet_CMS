@@ -177,7 +177,7 @@
             <span>{{ temp.loginTime }}</span>
           </el-form-item>
           <el-form-item label="最近上線地點:">
-            <span></span>
+            <span />
           </el-form-item>
         </div>
         <div class="right" style="float:left">
@@ -274,8 +274,8 @@ const genderMapping = {
   2: '女'
 }
 
-const kycStatusOptions = [{value:-10,label:'停用'},{value:-9,label:'KYC未通過'}, {value:-8,label:'AML未通過'}, {value:0,label:'草稿會員',disabled: true},
-      {value:1,label:'待審核',disabled: true}, {value:2,label:'ARC驗證成功'}, {value:3,label:'AML通過'}, {value:9,label:'正式會員'}]
+const kycStatusOptions = [{ value: -10, label: '停用' }, { value: -9, label: 'KYC未通過' }, { value: -8, label: 'AML未通過' }, { value: 0, label: '草稿會員', disabled: true },
+  { value: 1, label: '待審核', disabled: true }, { value: 2, label: 'ARC驗證成功' }, { value: 3, label: 'AML通過' }, { value: 9, label: '正式會員' }]
 
 const kycStatusKeyValue = kycStatusOptions.reduce((acc, cur) => {
   acc[cur.value] = cur.label
