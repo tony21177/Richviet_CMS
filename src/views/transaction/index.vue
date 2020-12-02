@@ -136,10 +136,11 @@
             <span>{{ temp.arcNo }}</span>
           </el-form-item>
           <el-form-item label="交易狀態">
-            <span>{{ temp.transactionStatus | transactionStatusFilter }}</span>
+            <span style="margin-right:10px">{{ temp.transactionStatus | transactionStatusFilter }}</span>
             <el-button
               type="primary"
               size="mini"
+              v-bind:disabled="waitingAdminVerify"
               @click="dialogFormVisible=false;dialogTransactionStatusVisible=true"
             >
               變更
@@ -159,7 +160,7 @@
             <span>{{ temp.exchangeRate }}</span>
           </el-form-item>
           <el-form-item label="實收金額">
-            <span>{{ temp.fromAmount - ((temp.fee-temp.discountAmount) < 0 ? 0: temp.fee-temp.discountAmount)}}</span>
+            <span>{{ temp.toAmount }}</span>
           </el-form-item>
           <div style="width: 100%; height: 40%; margin-top:70px" />
           <el-form-item label="收款銀行">
@@ -184,8 +185,8 @@
               v-for="(transactionStatus, index) in transactionStatusTimeLine"
               :key="index"
               :color="transactionStatus.color"
-              >
-              {{transactionStatus.label}}:
+            >
+              {{ transactionStatus.label }}:
               <el-card>
                 <h4>{{ transactionStatus.note }}</h4>
                 <p>{{ transactionStatus.timestamp }}</p>
@@ -200,69 +201,34 @@
     </el-dialog>
 
     <!-- change member status dialog -->
-    <!-- <el-dialog title="變更會員狀態" :visible.sync="dialogTransactionStatusVisible">
+    <el-dialog title="交易審核" :visible.sync="dialogTransactionStatusVisible">
       <el-form
-        ref="dataForm"
-        :model="temp"
         label-position="left"
         label-width="150px"
-        style="width: 600px; margin-left: 50px"
+        style="width: 400px; margin-left: 50px"
       >
-        <el-form-item label="姓名">
-          <span>{{ temp.name }}</span>
+        <el-form-item label="營運人員審核:">
+          <template>
+            <el-radio v-model="verifyPass" label="true">審核通過</el-radio>
+            <el-radio v-model="verifyPass" label="false">審核失敗</el-radio>
+          </template>
         </el-form-item>
-        <el-form-item label="ARC">
-          <span>{{ temp.arcNo }}</span>
+        <el-form-item label="備註:">
+          <el-input type="textarea" v-model="adminVerifyNote" :rows="3" maxlength="50" placeholder="請輸入審核原因請輸入審核原因"></el-input>
         </el-form-item>
-        <el-form-item label="核發日期:">
-          <span>{{ new Date(temp.arcIssueDate).toLocaleDateString() }}</span>
-        </el-form-item>
-        <el-form-item label="居留期限:">
-          <span>{{ new Date(temp.arcExpireDate).toLocaleDateString() }}</span>
-        </el-form-item>
-        <el-form-item label="背面序號:">
-          <span>{{ temp.backSequence }}</span>
-        </el-form-item>
-        <el-form-item label="生日:">
-          <span>{{ new Date(temp.birthday).toLocaleDateString() }}</span>
-        </el-form-item>
-        <el-form-item label="證件正面照:">
-          <img :src="imageUrl+'/2'" width="200" height="200">
-        </el-form-item>
-        <el-form-item label="證件反面照:">
-          <img :src="imageUrl+'/3'" width="200" height="200">
-        </el-form-item>
-        <el-form-item label="會員狀態">
-          <el-select
-            v-model="temp.kycStatus"
-            style="width: 150px"
-            class="filter-item"
-            @change="selectKycStatus"
-          >
-            <el-option
-              v-for="item in changTokycStatus"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-              :disabled="item.disabled"
-            />
-          </el-select>
-
-        </el-form-item>
+        
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogPvVisible = false;dialogFormVisible = true;dialogTransactionStatusVisible=false;"> Cancel </el-button>
-        <el-button type="primary" @click="changeKycStatus()">
-          Confirm
-        </el-button>
+        <el-button @click="dialogFormVisible = true;dialogTransactionStatusVisible=false;"> Cancel </el-button>
+        <el-button type="primary" @click="changeTransactionStatus()"> Confirm </el-button>
       </div>
-    </el-dialog> -->
+    </el-dialog>
 
   </div>
 </template>
 
 <script>
-import { fetchTransactionList,fetchTransactionById } from '@/api/transaction'
+import { fetchTransactionList, fetchTransactionById,verifyTransactionById } from '@/api/transaction'
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
@@ -271,7 +237,6 @@ const transactionStatusOptions = [{ value: -10, label: '其他錯誤', disabled:
   { value: 1, label: '待ARC審核', disabled: true }, { value: 2, label: 'ARC審核成功' }, { value: 3, label: 'AML審核成功' }, { value: 4, label: '營運人員確認完成,待繳費' },
   { value: 5, label: '已繳款完成,待匯款', disabled: true }, { value: 9, label: '交易完成' }]
 
-  
 const transactionStatusKeyValue = transactionStatusOptions.reduce((acc, cur) => {
   acc[cur.value] = cur.label
   return acc
@@ -299,7 +264,7 @@ export default {
         sort: '+id'
       },
       changToTransactionStatus: transactionStatusOptions,
-      transactionStatusTimeLine :　transactionStatusOptions.filter(status=>status.value>=0),
+      transactionStatusTimeLine:　transactionStatusOptions.filter(status => status.value >= 0),
       sortOptions: [
         { label: 'ID Ascending', key: '+id' },
         { label: 'ID Descending', key: '-id' }
@@ -322,12 +287,20 @@ export default {
       },
       dialogFormVisible: false,
       dialogTransactionStatusVisible: false,
-      downloadLoading: false
+      downloadLoading: false,
+      verifiedTransactionId:null,
+      verifyPass:null,
+      adminVerifyNote:''
     }
   },
   computed: {
     imageUrl() {
       return process.env.VUE_APP_ARC_IMAGE_URL + this.goingUpdateUserId
+    },
+    waitingAdminVerify(){
+      console.log("button")
+      console.log(this.temp.transactionStatus)
+      return this.temp.transactionStatus != 3
     }
   },
   created() {
@@ -348,24 +321,42 @@ export default {
         this.temp = Object.assign({}, response.data)
         this.temp.adminVerifyNote
         this.listLoading = false
-        this.transactionStatusTimeLine.find(status=>status.value==4).note = response.data.adminVerifyNote
+        let calculatedFee = this.temp.fee-this.temp.discountAmount<0?0:this.temp.fee-this.temp.discountAmount
+        this.temp.toAmount = (this.temp.fromAmount - calculatedFee)*this.temp.exchangeRate;
+        this.transactionStatusTimeLine.find(status => status.value == 4).note = response.data.adminVerifyNote
         this.transactionStatusTimeLine.forEach(status => {
-            if(status.value<=this.temp.transactionStatus){
-              status.color = '#0bbd87'
-            }
-        });
+          if (status.value <= this.temp.transactionStatus) {
+            status.color = '#0bbd87'
+          }
+        })
       })
     },
     handleFilter() {
       this.listQuery.page = 1
       this.getList()
     },
-    handleModifyStatus(row, status) {
-      this.$message({
-        message: '操作Success',
-        type: 'success'
+    changeTransactionStatus() {
+      let data = {"adminVerifyNote":this.adminVerifyNote,"verifyPass":this.verifyPass}
+      verifyTransactionById(this.verifiedTransactionId,data).then((response) => {
+        if (response.success) {
+          this.$notify({
+            title: 'Success',
+            message: response.msg,
+            type: 'success',
+            duration: 2000
+          })
+        } else {
+          this.$notify({
+            title: 'Fail',
+            message: response.msg,
+            type: 'error',
+            duration: 2000
+          })
+        }
+        this.dialogFormVisible = false
+        this.dialogTransactionStatusVisible = false
+        this.getList()
       })
-      row.status = status
     },
     sortChange(data) {
       const { prop, order } = data
@@ -382,13 +373,10 @@ export default {
       this.handleFilter()
     },
     handleUpdate(row, index) {
-      this.goingUpdateUserId = row.id
+      this.verifiedTransactionId = row.id
       this.getTransactionDetail(row.id)
       this.dialogTransactionStatusVisible = false
       this.dialogFormVisible = true
-    },
-    selectKycStatus(status) {
-      this.selectedKycStatus = status
     },
     changeKycStatus() {
       var data = { 'kycStatus': this.selectedKycStatus }

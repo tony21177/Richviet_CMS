@@ -37,7 +37,7 @@ const transaction = {
   bank: 'Ngân hàng Cathay United',
   payeeAddress: '00130042450',
   payeeRelationTypeDescription: '父母',
-  transactionStatus: 4,
+  transactionStatus: 3,
   formalApplyTime: new Date(),
   adminVerifyNote: "審核通過"
 }
@@ -52,6 +52,18 @@ module.exports = [
         success: true,
         msg: null,
         data:  transaction
+      }
+    }
+  },
+  {
+    url: '/vue-element-admin/transactions/[0-9]+',
+    type: 'post',
+    response: _ => {
+      return {
+        status: 200,
+        success: true,
+        msg: null,
+        data:  null
       }
     }
   },
