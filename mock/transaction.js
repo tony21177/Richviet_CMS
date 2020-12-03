@@ -20,7 +20,7 @@ for (let i = 0; i < count; i++) {
     bank: 'Ngân hàng Cathay United',
     payeeAddress: '0013004245'+i,
     payeeRelationTypeDescription: '父母',
-    'transactionStatus|1': [-10,-9,-8,0,1,2,3,9],
+    'transactionStatus|1': [-10,-9,-8,-7,0,1,2,3,4,5,9],
     formalApplyTime: new Date()
   }))
 }
@@ -37,7 +37,7 @@ const transaction = {
   bank: 'Ngân hàng Cathay United',
   payeeAddress: '00130042450',
   payeeRelationTypeDescription: '父母',
-  'transactionStatus|1': [-10,-9,-8,0,1,2,3,9],
+  'transactionStatus|1': [-10,-9,-8,-7,0,1,2,3,4,5,9],
   formalApplyTime: new Date(),
   adminVerifyNote: "審核通過"
 }

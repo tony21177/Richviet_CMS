@@ -209,8 +209,8 @@
       >
         <el-form-item label="營運人員審核:">
           <template>
-            <el-radio v-model="verifyPass" :label="true">審核通過</el-radio>
-            <el-radio v-model="verifyPass" :label="false">審核失敗</el-radio>
+            <el-radio v-model="verifyPass" :label="true">{{passActionMap[adminPassAction]}}</el-radio>
+            <el-radio v-model="verifyPass" :label="false">{{failActionMap[adminFailAction]}}</el-radio>
           </template>
         </el-form-item>
         <el-form-item label="備註:">
@@ -245,9 +245,8 @@ const ADMIN_VERIFIED = '營運人員確認完成,待繳費'
 const PAID = '已繳款完成,待匯款'
 const COMPLETE = '交易完成'
 
-
 const transactionStatusOptions = [{ value: -10, label: OTHER_ERROR, disabled: true }, { value: -9, label: FALL_VERIFIED }, { value: -8, label: FALL_AML }, { value: -7, label: OVER_TIME }, { value: 0, label: DRAFT, disabled: true },
-  { value: 1, label: WAITING_ARC_VERIFY, disabled: true }, { value: 2, label: PASS_ARC_VERIFY }, { value: 3, label: PASS_AML_VERIFY }, { value: 4, label: ADMIN_VERIFIED},
+  { value: 1, label: WAITING_ARC_VERIFY, disabled: true }, { value: 2, label: PASS_ARC_VERIFY }, { value: 3, label: PASS_AML_VERIFY }, { value: 4, label: ADMIN_VERIFIED },
   { value: 5, label: PAID, disabled: true }, { value: 9, label: COMPLETE }]
 
 const transactionStatusKeyValue = transactionStatusOptions.reduce((acc, cur) => {
@@ -259,7 +258,6 @@ const transactionStatusMapping = transactionStatusOptions.reduce((acc, cur) => {
   acc[cur.label] = cur.value
   return acc
 }, {})
-
 
 export default {
   name: 'TransactionsTable',
@@ -304,10 +302,20 @@ export default {
         transactionStatus: '',
         formalApplyTime: ''
       },
-      dialogStatus:'',
-      titleMap:{
+      dialogStatus: '',
+      titleMap: {
         verify: '營運人員審核:',
         complete: '匯款結果:'
+      },
+      adminPassAction:'',
+      adminFailAction:'',
+      passActionMap:{
+        verifyPass: '審核通過',
+        completePass: '匯款成功'
+      },
+      failActionMap:{
+        verifyFail: '審核失敗',
+        completeFail: '匯款失敗'
       },
       dialogFormVisible: false,
       dialogTransactionStatusVisible: false,
@@ -343,12 +351,16 @@ export default {
       fetchTransactionById(id).then((response) => {
         this.temp = Object.assign({}, response.data)
         this.listLoading = false
-        if(this.temp.transactionStatus==transactionStatusMapping[PASS_AML_VERIFY]){
-          this.dialogStatus = "verify"
-        }else if(this.temp.transactionStatus==transactionStatusMapping[PAID]){
-          this.dialogStatus = "complete"
-        }else{
-          this.dialogStatus = ""
+        if (this.temp.transactionStatus == transactionStatusMapping[PASS_AML_VERIFY]) {
+          this.dialogStatus = 'verify'
+          this.adminPassAction = 'verifyPass',
+          this.adminFailAction = 'verifyFail'
+        } else if (this.temp.transactionStatus == transactionStatusMapping[PAID]) {
+          this.dialogStatus = 'complete'
+          this.adminPassAction = 'completePass',
+          this.adminFailAction = 'completeFail'
+        } else {
+          this.dialogStatus = ''
         }
 
         const calculatedFee = this.temp.fee - this.temp.discountAmount < 0 ? 0 : this.temp.fee - this.temp.discountAmount
@@ -357,6 +369,8 @@ export default {
         this.transactionStatusTimeLine.forEach(status => {
           if (status.value <= this.temp.transactionStatus) {
             status.color = '#0bbd87'
+          }else{
+            status.color = ''
           }
         })
       })
@@ -366,33 +380,32 @@ export default {
       this.getList()
     },
     changeTransactionStatus() {
-      
-      if(this.dialogStatus == "verify"){
-          if(this.verifyPass){
-            this.toTransactionStatus = transactionStatusMapping[ADMIN_VERIFIED]
-          }else{
-            this.toTransactionStatus = transactionStatusMapping[FALL_VERIFIED]
-          }
-        }else if(this.dialogStatus == "complete"){
-          if(this.verifyPass){
-            this.toTransactionStatus = transactionStatusMapping[COMPLETE]
-          }else{
-            this.toTransactionStatus = transactionStatusMapping[OTHER_ERROR]
-          }
-        }else{
-          this.$notify({
-            title: 'FAIL',
-            message: 'Invalid Operation',
-            type: 'fail',
-            duration: 2000
-          })
-          this.dialogFormVisible = false
-          this.dialogTransactionStatusVisible = false
-          this.getList()
-          return
+      if (this.dialogStatus == 'verify') {
+        if (this.verifyPass) {
+          this.toTransactionStatus = transactionStatusMapping[ADMIN_VERIFIED]
+        } else {
+          this.toTransactionStatus = transactionStatusMapping[FALL_VERIFIED]
         }
+      } else if (this.dialogStatus == 'complete') {
+        if (this.verifyPass) {
+          this.toTransactionStatus = transactionStatusMapping[COMPLETE]
+        } else {
+          this.toTransactionStatus = transactionStatusMapping[OTHER_ERROR]
+        }
+      } else {
+        this.$notify({
+          title: 'FAIL',
+          message: 'Invalid Operation',
+          type: 'fail',
+          duration: 2000
+        })
+        this.dialogFormVisible = false
+        this.dialogTransactionStatusVisible = false
+        this.getList()
+        return
+      }
       const data = { 'adminVerifyNote': this.adminVerifyNote, 'transactionStatus': this.toTransactionStatus }
-      console.log(data);
+      console.log(data)
       verifyTransactionById(this.verifiedTransactionId, data).then((response) => {
         if (response.success) {
           this.$notify({
@@ -433,58 +446,6 @@ export default {
       this.getTransactionDetail(row.id)
       this.dialogTransactionStatusVisible = false
       this.dialogFormVisible = true
-    },
-    changeKycStatus() {
-      var data = { 'kycStatus': this.selectedKycStatus }
-      updateMemberKycStatus(this.goingUpdateUserId, data).then((response) => {
-        if (response.success) {
-          this.$notify({
-            title: 'Success',
-            message: response.msg,
-            type: 'success',
-            duration: 2000
-          })
-        } else {
-          this.$notify({
-            title: 'Fail',
-            message: response.msg,
-            type: 'error',
-            duration: 2000
-          })
-        }
-        this.dialogPvVisible = false
-        this.dialogFormVisible = false
-        this.dialogTransactionStatusVisible = false
-        this.getList()
-      })
-    },
-    updateData() {
-      this.$refs['dataForm'].validate((valid) => {
-        if (valid) {
-          const tempData = Object.assign({}, this.temp)
-          tempData.timestamp = +new Date(tempData.timestamp) // change Thu Nov 30 2017 16:41:05 GMT+0800 (CST) to 1512031311464
-          updateArticle(tempData).then(() => {
-            const index = this.list.findIndex((v) => v.id === this.temp.id)
-            this.list.splice(index, 1, this.temp)
-            this.dialogFormVisible = false
-            this.$notify({
-              title: 'Success',
-              message: 'Update Successfully',
-              type: 'success',
-              duration: 2000
-            })
-          })
-        }
-      })
-    },
-    handleDelete(row, index) {
-      this.$notify({
-        title: 'Success',
-        message: 'Delete Successfully',
-        type: 'success',
-        duration: 2000
-      })
-      this.list.splice(index, 1)
     },
     handleDownload() {
       this.downloadLoading = true

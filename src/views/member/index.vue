@@ -133,7 +133,7 @@
             <span>{{ temp.arcNo }}</span>
           </el-form-item>
           <el-form-item label="會員狀態">
-            <span>{{ temp.kycStatus | kycStatusFilter }}</span>
+            <span style="margin-right:10px">{{ temp.kycStatus | kycStatusFilter }}</span>
             <el-button
               type="primary"
               size="mini"
