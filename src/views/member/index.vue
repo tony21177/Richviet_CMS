@@ -137,7 +137,7 @@
             <el-button
               type="primary"
               size="mini"
-              @click="dialogFormVisible=false;dialogKycStatusVisible=true"
+              @click="dialogFormVisible=false;dialogKycStatusVisible=true;editDialogFormVisible=false"
             >
               變更
             </el-button>
@@ -146,14 +146,14 @@
             <span>{{ temp.level | levelFilter }}</span>
           </el-form-item>
           <div style="width: 100%; height: 40%; margin-top:70px" />
-          <el-form-item label="基本資料">
-            <el-button type="primary" size="mini"> 編輯 </el-button>
+          <el-form-item label="基本資料" label-width='100px'>
+            <el-button type="primary" size="mini" @click="dialogFormVisible=false;dialogKycStatusVisible=false;editDialogFormVisible=true"> 編輯 </el-button>
           </el-form-item>
           <el-form-item label="性別:">
             <span>{{ temp.gender | genderFilter }}</span>
           </el-form-item>
           <el-form-item label="國籍:">
-            <span>{{ temp.country }}</span>
+            <span>{{ temp.country | nationalityFilter}}</span>
           </el-form-item>
           <el-form-item label="生日:">
             <span>{{ new Date(temp.birthday).toLocaleDateString() }}</span>
@@ -191,6 +191,116 @@
       </el-form>
       <div slot="footer" class="dialog-footer" style="clear:both;">
         <el-button @click="dialogFormVisible = false"> Cancel </el-button>
+      </div>
+    </el-dialog>
+
+    <!-- edit member dialog -->
+    <el-dialog title="會員編輯" :visible.sync="editDialogFormVisible" width="70%">
+      <el-form
+        ref="editForm"
+        :model="temp"
+        label-position="left"
+        label-width="150px"
+        style="width: 40%; margin-left: 50px"
+      >
+        <div class="left">
+          <el-form-item label="姓名">
+            <el-input v-model="temp.name"></el-input>
+          </el-form-item>
+          <el-form-item label="ARC">
+            <el-input v-model="temp.arcNo"></el-input>
+          </el-form-item>
+          <el-form-item label="性別:">
+            <!-- <span>{{ temp.gender | genderFilter }}</span> -->
+            <el-select v-model="temp.gender">
+              <el-option
+                v-for="item in genderOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="國籍:">
+            <!-- <span>{{ temp.country }}</span> -->
+            <el-select v-model="temp.country">
+              <el-option
+                v-for="item in nationalityOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="生日:">
+            <el-date-picker
+              v-model="temp.birthday"
+              type="date"
+              placeholder="Pick a day">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item label="護照號碼:">
+            <el-input v-model="temp.passportId"></el-input>
+          </el-form-item>
+          <el-form-item label="核發日期:">
+            <el-date-picker
+              v-model="temp.arcIssueDate"
+              type="date"
+              placeholder="Pick a day">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item label="居留期限:">
+            <el-date-picker
+              v-model="temp.arcExpireDate"
+              type="date"
+              placeholder="Pick a day">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item label="背面序號:">
+            <el-input v-model="temp.backSequence"></el-input>
+          </el-form-item>
+          <el-form-item label="電話:">
+            <el-input v-model="temp.phone"></el-input>
+          </el-form-item>
+          <el-form-item label="居留證:">
+            <img :src="imageUrl+'/2'" width="200" height="200">
+            <img :src="imageUrl+'/3'" width="200" height="200">
+          </el-form-item>
+          <el-form-item label="會員狀態">
+          <el-select
+            v-model="temp.kycStatus"
+            style="width: 150px"
+            class="filter-item"
+            @change="selectKycStatus"
+          >
+            <el-option
+              v-for="item in changTokycStatus"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+              :disabled="item.disabled"
+            />
+          </el-select>
+
+          </el-form-item>
+          <el-form-item label="會員等級">
+            <!-- <span>{{ temp.level | levelFilter }}</span> -->
+            <el-select v-model="temp.level">
+              <el-option
+                v-for="item in levelOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </div>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible=true;dialogKycStatusVisible=false;editDialogFormVisible=false"> 取消 </el-button>
+        <el-button type="primary" @click="updateMember()">
+          確定變更
+        </el-button>
       </div>
     </el-dialog>
 
@@ -246,7 +356,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogPvVisible = false;dialogFormVisible = true;dialogKycStatusVisible=false;"> Cancel </el-button>
+        <el-button @click="dialogFormVisible=true;dialogKycStatusVisible=false;editDialogFormVisible=false"> Cancel </el-button>
         <el-button type="primary" @click="changeKycStatus()">
           Confirm
         </el-button>
@@ -257,27 +367,36 @@
 </template>
 
 <script>
-import { fetchMemberList, fetchMemberById, updateMemberKycStatus } from '@/api/member'
+import { fetchMemberList, fetchMemberById, updateMemberKycStatus,updateMember } from '@/api/member'
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 
-const levelMapping = {
-  0: '一般會員',
-  1: 'VIP',
-  9: '高風險會員'
-}
+const levelOptions = [{value:0,label:'一般會員'},{value:1,label:'VIP'},{value:9,label:'高風險會員'}]
+const genderOptions = [{value:0,label:'其他'},{value:1,label:'男'},{value:2,label:'女'}]
 
-const genderMapping = {
-  0: '其他',
-  1: '男',
-  2: '女'
-}
+const nationalityOptions = 
+[{value: 'VN',label: '越南'},{value: 'TW',label: '台灣'}]
 
 const kycStatusOptions = [{ value: -10, label: '停用' }, { value: -9, label: 'KYC未通過' }, { value: -8, label: 'AML未通過' }, { value: 0, label: '草稿會員', disabled: true },
   { value: 1, label: '待審核', disabled: true }, { value: 2, label: 'ARC驗證成功' }, { value: 3, label: 'AML通過' }, { value: 9, label: '正式會員' }]
 
 const kycStatusKeyValue = kycStatusOptions.reduce((acc, cur) => {
+  acc[cur.value] = cur.label
+  return acc
+}, {})
+
+const genderMapping = genderOptions.reduce((acc, cur) => {
+  acc[cur.value] = cur.label
+  return acc
+}, {})
+
+const levelMapping = levelOptions.reduce((acc, cur) => {
+  acc[cur.value] = cur.label
+  return acc
+}, {})
+
+const nationalityMapping = nationalityOptions.reduce((acc, cur) => {
   acc[cur.value] = cur.label
   return acc
 }, {})
@@ -295,6 +414,9 @@ export default {
     },
     genderFilter(type) {
       return genderMapping[type]
+    },
+    nationalityFilter(type){
+      return nationalityMapping[type]
     }
   },
   data() {
@@ -314,6 +436,9 @@ export default {
         { label: 'ID Ascending', key: '+id' },
         { label: 'ID Descending', key: '-id' }
       ],
+      genderOptions:genderOptions,
+      nationalityOptions:nationalityOptions,
+      levelOptions:levelOptions,
       temp: {
         id: undefined,
         name: '',
@@ -335,6 +460,7 @@ export default {
       },
       goingUpdateUserId: undefined,
       dialogFormVisible: false,
+      editDialogFormVisible: false,
       dialogKycStatusVisible: false,
       dialogPvVisible: false,
       downloadLoading: false
@@ -394,9 +520,41 @@ export default {
       this.getMemberDetail(row.id)
       this.dialogKycStatusVisible = false
       this.dialogFormVisible = true
+      this.editDialogFormVisible = false;
     },
     selectKycStatus(status) {
       this.selectedKycStatus = status
+    },
+    updateMember(){
+      
+      const birthday = new Date(this.temp.birthday);
+      this.temp.birthday = birthday.getFullYear()+"/"+(birthday.getMonth()+1)+"/"+birthday.getDate()
+      const arcIssueDate = new Date(this.temp.arcIssueDate);
+      this.temp.arcIssueDate = arcIssueDate.getFullYear()+"/"+(arcIssueDate.getMonth()+1)+"/"+arcIssueDate.getDate()
+      const arcExpireDate = new Date(this.temp.arcExpireDate);
+      this.temp.arcExpireDate = arcExpireDate.getFullYear()+"/"+(arcExpireDate.getMonth()+1)+"/"+arcExpireDate.getDate()
+      this.temp.arcName = this.temp.name
+      updateMember(this.temp).then((response) => {
+        if (response.success) {
+          this.$notify({
+            title: 'Success',
+            message: response.msg,
+            type: 'success',
+            duration: 2000
+          })
+        } else {
+          this.$notify({
+            title: 'Fail',
+            message: response.msg,
+            type: 'error',
+            duration: 2000
+          })
+        }
+        this.editDialogFormVisible = false
+        this.dialogFormVisible = false
+        this.dialogKycStatusVisible = false
+        this.getList()
+      })
     },
     changeKycStatus() {
       var data = { 'kycStatus': this.selectedKycStatus }
@@ -416,7 +574,7 @@ export default {
             duration: 2000
           })
         }
-        this.dialogPvVisible = false
+        this.editDialogFormVisible = false
         this.dialogFormVisible = false
         this.dialogKycStatusVisible = false
         this.getList()

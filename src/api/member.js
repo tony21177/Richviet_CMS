@@ -27,3 +27,17 @@ export function updateMemberKycStatus(id, data) {
     }
   })
 }
+
+
+export function updateMember(data) {
+  console.log('debug updateMember')
+  console.log(data)
+  return request({
+    url: `/admin/user/v1/command/modify`,
+    method: 'post',
+    data,
+    headers: {
+      'Content-type': 'application/json; charset=UTF-8;'
+    }
+  })
+}
