@@ -140,7 +140,7 @@
             <el-button
               type="primary"
               size="mini"
-              v-bind:disabled="waitingAdminVerify"
+              :disabled="waitingAdminVerify"
               @click="dialogFormVisible=false;dialogTransactionStatusVisible=true"
             >
               變更
@@ -200,8 +200,8 @@
       </div>
     </el-dialog>
 
-    <!-- change member status dialog -->
-    <el-dialog title="交易審核" :visible.sync="dialogTransactionStatusVisible">
+    <!-- change transaction status dialog -->
+    <el-dialog :title="titleMap[dialogStatus]" :visible.sync="dialogTransactionStatusVisible">
       <el-form
         label-position="left"
         label-width="150px"
@@ -209,14 +209,14 @@
       >
         <el-form-item label="營運人員審核:">
           <template>
-            <el-radio v-model="verifyPass" label="true">審核通過</el-radio>
-            <el-radio v-model="verifyPass" label="false">審核失敗</el-radio>
+            <el-radio v-model="verifyPass" :label="true">審核通過</el-radio>
+            <el-radio v-model="verifyPass" :label="false">審核失敗</el-radio>
           </template>
         </el-form-item>
         <el-form-item label="備註:">
-          <el-input type="textarea" v-model="adminVerifyNote" :rows="3" maxlength="50" placeholder="請輸入審核原因請輸入審核原因"></el-input>
+          <el-input v-model="adminVerifyNote" type="textarea" :rows="3" maxlength="50" placeholder="請輸入審核原因請輸入審核原因" />
         </el-form-item>
-        
+
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = true;dialogTransactionStatusVisible=false;"> Cancel </el-button>
@@ -228,19 +228,38 @@
 </template>
 
 <script>
-import { fetchTransactionList, fetchTransactionById,verifyTransactionById } from '@/api/transaction'
+import { fetchTransactionList, fetchTransactionById, verifyTransactionById } from '@/api/transaction'
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 
-const transactionStatusOptions = [{ value: -10, label: '其他錯誤', disabled: true }, { value: -9, label: '審核失敗' }, { value: -8, label: 'AML未通過' }, { value: -7, label: '交易逾期' }, { value: 0, label: '草稿', disabled: true },
-  { value: 1, label: '待ARC審核', disabled: true }, { value: 2, label: 'ARC審核成功' }, { value: 3, label: 'AML審核成功' }, { value: 4, label: '營運人員確認完成,待繳費' },
-  { value: 5, label: '已繳款完成,待匯款', disabled: true }, { value: 9, label: '交易完成' }]
+const OTHER_ERROR = '其他錯誤'
+const FALL_VERIFIED = '審核失敗'
+const FALL_AML = 'AML未通過'
+const OVER_TIME = '交易逾期'
+const DRAFT = '草稿'
+const WAITING_ARC_VERIFY = '待ARC審核'
+const PASS_ARC_VERIFY = 'ARC審核成功'
+const PASS_AML_VERIFY = 'AML審核成功'
+const ADMIN_VERIFIED = '營運人員確認完成,待繳費'
+const PAID = '已繳款完成,待匯款'
+const COMPLETE = '交易完成'
+
+
+const transactionStatusOptions = [{ value: -10, label: OTHER_ERROR, disabled: true }, { value: -9, label: FALL_VERIFIED }, { value: -8, label: FALL_AML }, { value: -7, label: OVER_TIME }, { value: 0, label: DRAFT, disabled: true },
+  { value: 1, label: WAITING_ARC_VERIFY, disabled: true }, { value: 2, label: PASS_ARC_VERIFY }, { value: 3, label: PASS_AML_VERIFY }, { value: 4, label: ADMIN_VERIFIED},
+  { value: 5, label: PAID, disabled: true }, { value: 9, label: COMPLETE }]
 
 const transactionStatusKeyValue = transactionStatusOptions.reduce((acc, cur) => {
   acc[cur.value] = cur.label
   return acc
 }, {})
+
+const transactionStatusMapping = transactionStatusOptions.reduce((acc, cur) => {
+  acc[cur.label] = cur.value
+  return acc
+}, {})
+
 
 export default {
   name: 'TransactionsTable',
@@ -264,7 +283,7 @@ export default {
         sort: '+id'
       },
       changToTransactionStatus: transactionStatusOptions,
-      transactionStatusTimeLine:　transactionStatusOptions.filter(status => status.value >= 0),
+      transactionStatusTimeLine:　transactionStatusOptions.filter(status => status.value >= transactionStatusMapping[DRAFT]),
       sortOptions: [
         { label: 'ID Ascending', key: '+id' },
         { label: 'ID Descending', key: '-id' }
@@ -285,22 +304,26 @@ export default {
         transactionStatus: '',
         formalApplyTime: ''
       },
+      dialogStatus:'',
+      titleMap:{
+        verify: '營運人員審核:',
+        complete: '匯款結果:'
+      },
       dialogFormVisible: false,
       dialogTransactionStatusVisible: false,
       downloadLoading: false,
-      verifiedTransactionId:null,
-      verifyPass:null,
-      adminVerifyNote:''
+      verifiedTransactionId: null,
+      verifyPass: '',
+      adminVerifyNote: '',
+      toTransactionStatus: ''
     }
   },
   computed: {
     imageUrl() {
       return process.env.VUE_APP_ARC_IMAGE_URL + this.goingUpdateUserId
     },
-    waitingAdminVerify(){
-      console.log("button")
-      console.log(this.temp.transactionStatus)
-      return this.temp.transactionStatus != 3
+    waitingAdminVerify() {
+      return this.temp.transactionStatus != transactionStatusMapping[PASS_AML_VERIFY] && this.temp.transactionStatus != transactionStatusMapping[PAID]
     }
   },
   created() {
@@ -319,11 +342,18 @@ export default {
       this.listLoading = true
       fetchTransactionById(id).then((response) => {
         this.temp = Object.assign({}, response.data)
-        this.temp.adminVerifyNote
         this.listLoading = false
-        let calculatedFee = this.temp.fee-this.temp.discountAmount<0?0:this.temp.fee-this.temp.discountAmount
-        this.temp.toAmount = (this.temp.fromAmount - calculatedFee)*this.temp.exchangeRate;
-        this.transactionStatusTimeLine.find(status => status.value == 4).note = response.data.adminVerifyNote
+        if(this.temp.transactionStatus==transactionStatusMapping[PASS_AML_VERIFY]){
+          this.dialogStatus = "verify"
+        }else if(this.temp.transactionStatus==transactionStatusMapping[PAID]){
+          this.dialogStatus = "complete"
+        }else{
+          this.dialogStatus = ""
+        }
+
+        const calculatedFee = this.temp.fee - this.temp.discountAmount < 0 ? 0 : this.temp.fee - this.temp.discountAmount
+        this.temp.toAmount = (this.temp.fromAmount - calculatedFee) * this.temp.exchangeRate
+        this.transactionStatusTimeLine.find(status => status.value == transactionStatusMapping[ADMIN_VERIFIED]).note = response.data.adminVerifyNote
         this.transactionStatusTimeLine.forEach(status => {
           if (status.value <= this.temp.transactionStatus) {
             status.color = '#0bbd87'
@@ -336,8 +366,34 @@ export default {
       this.getList()
     },
     changeTransactionStatus() {
-      let data = {"adminVerifyNote":this.adminVerifyNote,"verifyPass":this.verifyPass}
-      verifyTransactionById(this.verifiedTransactionId,data).then((response) => {
+      
+      if(this.dialogStatus == "verify"){
+          if(this.verifyPass){
+            this.toTransactionStatus = transactionStatusMapping[ADMIN_VERIFIED]
+          }else{
+            this.toTransactionStatus = transactionStatusMapping[FALL_VERIFIED]
+          }
+        }else if(this.dialogStatus == "complete"){
+          if(this.verifyPass){
+            this.toTransactionStatus = transactionStatusMapping[COMPLETE]
+          }else{
+            this.toTransactionStatus = transactionStatusMapping[OTHER_ERROR]
+          }
+        }else{
+          this.$notify({
+            title: 'FAIL',
+            message: 'Invalid Operation',
+            type: 'fail',
+            duration: 2000
+          })
+          this.dialogFormVisible = false
+          this.dialogTransactionStatusVisible = false
+          this.getList()
+          return
+        }
+      const data = { 'adminVerifyNote': this.adminVerifyNote, 'transactionStatus': this.toTransactionStatus }
+      console.log(data);
+      verifyTransactionById(this.verifiedTransactionId, data).then((response) => {
         if (response.success) {
           this.$notify({
             title: 'Success',

@@ -37,7 +37,7 @@ const transaction = {
   bank: 'Ngân hàng Cathay United',
   payeeAddress: '00130042450',
   payeeRelationTypeDescription: '父母',
-  transactionStatus: 3,
+  'transactionStatus|1': [-10,-9,-8,0,1,2,3,9],
   formalApplyTime: new Date(),
   adminVerifyNote: "審核通過"
 }

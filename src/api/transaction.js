@@ -14,8 +14,7 @@ export function fetchTransactionById(id) {
   })
 }
 
-
-export function verifyTransactionById(id,data) {
+export function verifyTransactionById(id, data) {
   return request({
     url: `/vue-element-admin/transactions/${id}`,
     method: 'post',
