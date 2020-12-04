@@ -28,7 +28,6 @@ export function updateMemberKycStatus(id, data) {
   })
 }
 
-
 export function updateMember(data) {
   console.log('debug updateMember')
   console.log(data)
@@ -39,5 +38,14 @@ export function updateMember(data) {
     headers: {
       'Content-type': 'application/json; charset=UTF-8;'
     }
+  })
+}
+
+export function deleteMember(userId) {
+  console.log('debug deleteMember')
+  console.log(userId)
+  return request({
+    url: `admin/user/v1/command/${userId}`,
+    method: 'delete'
   })
 }
