@@ -148,7 +148,7 @@
           </el-form-item>
           <div style="width: 100%; height: 40%; margin-top:70px" />
           <el-form-item label="交易金額">
-            <span>{{ temp.fromAmount}}</span>
+            <span>{{ temp.fromAmount }}</span>
           </el-form-item>
           <el-form-item label="手續費">
             <span>{{ temp.fee }}</span>
@@ -209,12 +209,12 @@
       >
         <el-form-item label="營運人員審核:">
           <template>
-            <el-radio v-model="verifyPass" :label="true" >{{passActionMap[adminPassAction]}}</el-radio>
-            <el-radio v-model="verifyPass" :label="false">{{failActionMap[adminFailAction]}}</el-radio>
+            <el-radio v-model="verifyPass" :label="true">{{ passActionMap[adminPassAction] }}</el-radio>
+            <el-radio v-model="verifyPass" :label="false">{{ failActionMap[adminFailAction] }}</el-radio>
           </template>
         </el-form-item>
         <el-form-item label="備註:">
-          <el-input v-model="adminVerifyNote" type="textarea" :rows="3" maxlength="50" placeholder="請輸入審核原因請輸入審核原因"/>
+          <el-input v-model="adminVerifyNote" type="textarea" :rows="3" maxlength="50" placeholder="請輸入審核原因請輸入審核原因" />
         </el-form-item>
 
       </el-form>
@@ -228,10 +228,10 @@
       <el-form
         label-position="left"
         label-width="150px"
-        style="width: 700px; margin-left: 50px"
+        style="width: 550px; margin-left: 50px"
       >
         <el-form-item label="營運人員審核:">
-          <el-card >模擬使用者匯款成功,銀行通知繳款完成</el-card>
+          <el-card>模擬使用者匯款成功,銀行通知繳款完成</el-card>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -243,7 +243,7 @@
 </template>
 
 <script>
-import { fetchTransactionList, fetchTransactionById, verifyTransactionById, amlReviewById, completeById,simulatePaying } from '@/api/transaction'
+import { fetchTransactionList, fetchTransactionById, verifyTransactionById, amlReviewById, completeById, simulatePaying } from '@/api/transaction'
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
@@ -322,13 +322,13 @@ export default {
         verify: '營運人員審核:',
         complete: '匯款結果:'
       },
-      adminPassAction:'',
-      adminFailAction:'',
-      passActionMap:{
+      adminPassAction: '',
+      adminFailAction: '',
+      passActionMap: {
         verifyPass: '審核通過',
-        completePass: '匯款成功',
+        completePass: '匯款成功'
       },
-      failActionMap:{
+      failActionMap: {
         verifyFail: '審核失敗',
         completeFail: '匯款失敗'
       },
@@ -345,22 +345,22 @@ export default {
   },
   computed: {
     imageUrl() {
-      return process.env.VUE_APP_ARC_IMAGE_URL+"remit/" + this.verifiedTransactionId
+      return process.env.VUE_APP_ARC_IMAGE_URL + 'remit/' + this.verifiedTransactionId
     },
     waitingAdminVerify() {
-      return this.temp.transactionStatus != transactionStatusMapping[PASS_AML_VERIFY] && this.temp.transactionStatus != transactionStatusMapping[PAID]
+      return this.temp.transactionStatus != transactionStatusMapping[PASS_AML_VERIFY] && this.temp.transactionStatus != transactionStatusMapping[PAID] &&
       // for demo
-      && this.temp.transactionStatus != transactionStatusMapping[ADMIN_VERIFIED]
+      this.temp.transactionStatus != transactionStatusMapping[ADMIN_VERIFIED]
     }
   },
   created() {
     this.getList()
   },
   methods: {
-    showDialog(){
-      this.dialogFormVisible=false;this.dialogTransactionStatusVisible=true
-      if(this.isSimulatingPay){
-        this.dialogFormVisible=false;this.dialogTransactionStatusVisible=false;this.SimulateingPayShow=true
+    showDialog() {
+      this.dialogFormVisible = false; this.dialogTransactionStatusVisible = true
+      if (this.isSimulatingPay) {
+        this.dialogFormVisible = false; this.dialogTransactionStatusVisible = false; this.SimulateingPayShow = true
       }
     },
     getList() {
@@ -384,11 +384,10 @@ export default {
           this.dialogStatus = 'complete'
           this.adminPassAction = 'completePass',
           this.adminFailAction = 'completeFail'
-        } else if( this.temp.transactionStatus == transactionStatusMapping[ADMIN_VERIFIED]){
+        } else if (this.temp.transactionStatus == transactionStatusMapping[ADMIN_VERIFIED]) {
           // 模擬使用者繳款
-          this.isSimulatingPay = true;
-        } 
-        else {
+          this.isSimulatingPay = true
+        } else {
           this.dialogStatus = ''
         }
 
@@ -398,7 +397,7 @@ export default {
         this.transactionStatusTimeLine.forEach(status => {
           if (status.value <= this.temp.transactionStatus) {
             status.color = '#0bbd87'
-          }else{
+          } else {
             status.color = ''
           }
         })
@@ -408,10 +407,10 @@ export default {
       this.listQuery.page = 1
       this.getList()
     },
-    simulatePay(){
+    simulatePay() {
       // 模擬使用者付款
-          const data = {"recordId":this.verifiedTransactionId,"isComplete":true,"comment":this.adminVerifyNote}
-          simulatePaying(data).then((response) => {
+      const data = { 'recordId': this.verifiedTransactionId, 'isComplete': true, 'comment': this.adminVerifyNote }
+      simulatePaying(data).then((response) => {
         if (response.success) {
           this.$notify({
             title: 'Success',
@@ -430,12 +429,13 @@ export default {
         this.dialogFormVisible = false
         this.dialogTransactionStatusVisible = false
         this.SimulateingPayShow = false
+        this.isSimulatingPay = false
         this.getList()
-        })
+      })
     },
     changeTransactionStatus() {
       if (this.dialogStatus == 'verify') {
-        let pass = false;
+        let pass = false
         if (this.verifyPass) {
           pass = true
           // this.toTransactionStatus = transactionStatusMapping[ADMIN_VERIFIED]
@@ -443,57 +443,56 @@ export default {
           pass = false
           // this.toTransactionStatus = transactionStatusMapping[FALL_VERIFIED]
         }
-        const data = {"recordId":this.verifiedTransactionId,"isAmlPass":pass,"comment":this.adminVerifyNote}
+        const data = { 'recordId': this.verifiedTransactionId, 'isAmlPass': pass, 'comment': this.adminVerifyNote }
         amlReviewById(data).then((response) => {
-        if (response.success) {
-          this.$notify({
-            title: 'Success',
-            message: response.msg,
-            type: 'success',
-            duration: 2000
-          })
-        } else {
-          this.$notify({
-            title: 'Fail',
-            message: response.msg,
-            type: 'error',
-            duration: 2000
-          })
-        }
-        this.dialogFormVisible = false
-        this.dialogTransactionStatusVisible = false
-        this.getList()
+          if (response.success) {
+            this.$notify({
+              title: 'Success',
+              message: response.msg,
+              type: 'success',
+              duration: 2000
+            })
+          } else {
+            this.$notify({
+              title: 'Fail',
+              message: response.msg,
+              type: 'error',
+              duration: 2000
+            })
+          }
+          this.dialogFormVisible = false
+          this.dialogTransactionStatusVisible = false
+          this.getList()
         })
       } else if (this.dialogStatus == 'complete') {
-        let pass = false;
+        let pass = false
         if (this.verifyPass) {
           pass = true
-
         } else {
           pass = false
         }
-        const data = {"recordId":this.verifiedTransactionId,"isComplete":pass,"comment":this.adminVerifyNote}
+        const data = { 'recordId': this.verifiedTransactionId, 'isComplete': pass, 'comment': this.adminVerifyNote }
         completeById(data).then((response) => {
-        if (response.success) {
-          this.$notify({
-            title: 'Success',
-            message: response.msg,
-            type: 'success',
-            duration: 2000
-          })
-        } else {
-          this.$notify({
-            title: 'Fail',
-            message: response.msg,
-            type: 'error',
-            duration: 2000
-          })
-        }
-        this.dialogFormVisible = false
-        this.dialogTransactionStatusVisible = false
-        this.getList()
+          if (response.success) {
+            this.$notify({
+              title: 'Success',
+              message: response.msg,
+              type: 'success',
+              duration: 2000
+            })
+          } else {
+            this.$notify({
+              title: 'Fail',
+              message: response.msg,
+              type: 'error',
+              duration: 2000
+            })
+          }
+          this.dialogFormVisible = false
+          this.dialogTransactionStatusVisible = false
+          this.getList()
         })
-      }else {
+      } else {
         this.$notify({
           title: 'FAIL',
           message: 'Invalid Operation',

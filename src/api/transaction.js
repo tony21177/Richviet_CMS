@@ -14,7 +14,6 @@ export function fetchTransactionById(id) {
   })
 }
 
-
 export function amlReviewById(data) {
   return request({
     url: `/admin/remit/v1/review/AmlReview`,
@@ -37,7 +36,7 @@ export function completeById(data) {
   })
 }
 
-export function simulatePaying(data){
+export function simulatePaying(data) {
   return request({
     url: `/admin/remit/v1/review/SimulatingUserPay`,
     method: 'post',

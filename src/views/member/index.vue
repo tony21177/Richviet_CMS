@@ -374,7 +374,7 @@
 </template>
 
 <script>
-import { fetchMemberList, fetchMemberById, updateMemberKycStatus, updateMember,deleteMember } from '@/api/member'
+import { fetchMemberList, fetchMemberById, updateMemberKycStatus, updateMember, deleteMember } from '@/api/member'
 import waves from '@/directive/waves' // waves directive
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
@@ -530,7 +530,7 @@ export default {
       this.editDialogFormVisible = false
     },
     handleDelete(row, index) {
-      let userId = row.id;
+      const userId = row.id
       deleteMember(userId).then((response) => {
         if (response.success) {
           this.$notify({
@@ -629,7 +629,7 @@ export default {
         }
       })
     },
-    
+
     handleDownload() {
       this.downloadLoading = true
       import('@/vendor/Export2Excel').then((excel) => {
