@@ -181,7 +181,7 @@
             <span>{{ temp.phone }}</span>
           </el-form-item>
           <el-form-item label="最後上線時間:">
-            <span>{{ temp.loginTime }}</span>
+            <span>{{ new Date(temp.loginTime*1000).toLocaleDateString() +' '+ new Date(temp.loginTime*1000).toLocaleTimeString() }}</span>
           </el-form-item>
           <el-form-item label="最近上線地點:">
             <span />
