@@ -47,7 +47,7 @@
       v-loading="listLoading"
       :data="list"
       border
-      fit
+
       highlight-current-row
       style="width: 100%"
       @sort-change="sortChange"
@@ -96,7 +96,6 @@
       <el-table-column
         label="Actions"
         align="center"
-        width="230"
         class-name="small-padding fixed-width"
       >
         <template slot-scope="{ row, $index }">
